@@ -1,0 +1,36 @@
+cmake_minimum_required(VERSION 3.14)
+project(test LANGUAGES OBJC)
+
+set(CMAKE_XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.kambala.test.$(PRODUCT_NAME)")
+set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED NO)
+
+add_library(mylib SHARED
+	lib.h
+	lib.m
+)
+target_include_directories(mylib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(mylib PUBLIC
+	"-framework UIKit"
+)
+
+add_executable(${PROJECT_NAME}
+	main.m
+)
+set_target_properties(${PROJECT_NAME} PROPERTIES
+	MACOSX_BUNDLE_GUI_IDENTIFIER "$(PRODUCT_BUNDLE_IDENTIFIER)"
+	MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
+	MACOSX_BUNDLE_BUNDLE_VERSION "1"
+	XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED YES
+	XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/Frameworks"
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE
+	mylib
+)
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+	COMMAND ${CMAKE_COMMAND} --install "${CMAKE_BINARY_DIR}" --config "$<CONFIG>" --prefix "$<TARGET_BUNDLE_CONTENT_DIR:${PROJECT_NAME}>"
+	COMMAND ${CMAKE_SOURCE_DIR}/apple_codesign.sh
+)
+
+include(GNUInstallDirs)
+set(CMAKE_INSTALL_LIBDIR "Frameworks")
+install(TARGETS mylib LIBRARY)
