@@ -47,3 +47,4 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 include(GNUInstallDirs)
 set(CMAKE_INSTALL_LIBDIR "Frameworks")
 install(TARGETS mylib LIBRARY)
+install(FILES ${EXTLIB_LIBRARY} TYPE LIB)
