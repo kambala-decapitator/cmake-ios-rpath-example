@@ -46,5 +46,12 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 
 include(GNUInstallDirs)
 set(CMAKE_INSTALL_LIBDIR "Frameworks")
-install(TARGETS mylib LIBRARY)
-install(FILES ${EXTLIB_LIBRARY} TYPE LIB)
+# install shared libraries
+get_target_property(LINKED_LIBS ${PROJECT_NAME} LINK_LIBRARIES)
+foreach(LINKED_LIB IN LISTS LINKED_LIBS)
+	if(TARGET ${LINKED_LIB})
+		install(TARGETS ${LINKED_LIB} LIBRARY)
+	else()
+		install(FILES ${LINKED_LIB} TYPE LIB)
+	endif()
+endforeach()
