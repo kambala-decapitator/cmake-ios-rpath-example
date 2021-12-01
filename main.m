@@ -1,5 +1,6 @@
 #import <UIKit/UIKit.h>
 #import <lib.h>
+#import <extlib.h>
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 @property (nonatomic, strong) UIWindow* window;
@@ -9,7 +10,7 @@
 
 - (BOOL)application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary*)launchOptions {
 	self.window = createWindow();
-	NSLog(@"%@", NSBundle.mainBundle.bundlePath);
+	NSLog(@"%d, %@", isStoreAvailable(), NSBundle.mainBundle.bundlePath);
 	return YES;
 }
 
