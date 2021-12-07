@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(test LANGUAGES OBJC)
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 set(CMAKE_XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.kambala.test.$(PRODUCT_NAME)")
 set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED NO)
@@ -23,16 +24,12 @@ target_link_libraries(mylib PUBLIC
 	"-framework UIKit"
 )
 
+include(MyHelpers)
+
 add_executable(${PROJECT_NAME}
 	main.m
 )
-set_target_properties(${PROJECT_NAME} PROPERTIES
-	MACOSX_BUNDLE_GUI_IDENTIFIER "$(PRODUCT_BUNDLE_IDENTIFIER)"
-	MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
-	MACOSX_BUNDLE_BUNDLE_VERSION "1"
-	XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "$(CODE_SIGNING_ALLOWED_FOR_APPS)"
-	XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/Frameworks"
-)
+ConfigureAppTarget(${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} PRIVATE
 	${EXTLIB_INCLUDE}
 )
@@ -40,24 +37,22 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 	mylib
 	${EXTLIB_LIBRARY}
 )
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-	COMMAND ${CMAKE_COMMAND} --install "${CMAKE_BINARY_DIR}" --config "$<CONFIG>" --prefix "$<TARGET_BUNDLE_CONTENT_DIR:${PROJECT_NAME}>"
-	COMMAND ${CMAKE_SOURCE_DIR}/apple_codesign.sh
+PackageAppBundle(${PROJECT_NAME} main)
+
+add_executable(OtherApp
+	main_other.m
 )
+ConfigureAppTarget(OtherApp)
+target_link_libraries(OtherApp PRIVATE
+	mylib
+)
+PackageAppBundle(OtherApp other)
 
 include(GNUInstallDirs)
+
+set(CMAKE_INSTALL_DATADIR ".")
+install(FILES "LICENSE" TYPE DATA COMPONENT other)
+
 set(CMAKE_INSTALL_LIBDIR "Frameworks")
-# install shared libraries
-get_target_property(LINKED_LIBS ${PROJECT_NAME} LINK_LIBRARIES)
-foreach(LINKED_LIB IN LISTS LINKED_LIBS)
-	if(TARGET ${LINKED_LIB})
-		get_target_property(LIB_TYPE ${LINKED_LIB} TYPE)
-		if(LIB_TYPE STREQUAL "SHARED_LIBRARY")
-			install(TARGETS ${LINKED_LIB} LIBRARY)
-		endif()
-	else()
-		if(LINKED_LIB MATCHES "${CMAKE_SHARED_LIBRARY_SUFFIX}$")
-			install(FILES ${LINKED_LIB} TYPE LIB)
-		endif()
-	endif()
-endforeach()
+InstallSharedLibraries(${PROJECT_NAME} main)
+InstallSharedLibraries(OtherApp other)
